@@ -1,0 +1,13 @@
+-Llib,
+-lstdc++fs,
+-lkernel32,
+-luser32,
+-lwinspool,
+-lshell32,
+-lcomdlg32,
+-ladvapi32,
+-lole32,
+-loleaut32,
+-luuid,
+-lodbc32,
+-lodbccp32

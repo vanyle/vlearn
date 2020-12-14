@@ -1,0 +1,60 @@
+name: myProject
+author: me
+version: 0.1
+tasks:
+  release: 
+    type: build
+    timer: true
+    source_path: src
+    output_path: build
+    linker: ar rcs
+    ignore: 
+      - test
+    output_file: executable/libproject.a
+    linker_arguments: []
+    arguments: 
+      - -fdiagnostics-color
+      - -Wall
+      - -D NDEBUG # disable assertions
+      - -Os
+      - -Isrc
+      - -Iinclude
+  
+  release_test:
+    type: build
+    timer: true
+    source_path: src/test
+    output_path: build
+    output_file: executable/test.exe
+    linker_arguments: ["-L./executable","-lproject","-static"]
+    arguments:
+      - -fdiagnostics-color
+      - -Os
+      - -Isrc
+
+  debug:
+    copy: release
+    output_file: executable/project_debug.exe
+    arguments:
+      - -fdiagnostics-color
+      - -Wall
+      - -O0
+      - -g # add debugging data
+      - -Isrc
+      - -Iinclude
+
+  run_debug:
+    type: command
+    commands:
+      - cd executable & test.exe
+
+  run:
+    type: command
+    commands:
+      - cd executable & test.exe
+
+  clean:
+    type: command
+    commands:
+      - del /q ".\build\*"
+      - FOR /D %p IN (".\build\*.*") DO rmdir "%p" /s /q
