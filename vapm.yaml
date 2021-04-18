@@ -1,4 +1,4 @@
-name: myProject
+name: vtoolbox
 author: me
 version: 0.1
 tasks:
@@ -7,11 +7,10 @@ tasks:
     timer: true
     source_path: src
     output_path: build
-    linker: ar rcs
+    linker: ar -crs
     ignore: 
       - test
     output_file: executable/libproject.a
-    linker_arguments: []
     arguments: 
       - -fdiagnostics-color
       - -Wall
@@ -20,21 +19,32 @@ tasks:
       - -Isrc
       - -Iinclude
   
+  doc:
+    type: script
+    name: doc.py
+    arg: src
+
+  gen_pdb:
+    type: command
+    commands:
+      - cv2pdb executable/test.exe
+
   release_test:
     type: build
     timer: true
     source_path: src/test
     output_path: build
     output_file: executable/test.exe
-    linker_arguments: ["-L./executable","-lproject","-static"]
+    linker_arguments: ["-L./executable","-lproject", @include "libraries.yaml", "-static"]
     arguments:
       - -fdiagnostics-color
       - -Os
       - -Isrc
+      - -g
 
   debug:
     copy: release
-    output_file: executable/project_debug.exe
+    output_file: executable/libproject.a
     arguments:
       - -fdiagnostics-color
       - -Wall
