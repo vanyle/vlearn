@@ -43,22 +43,21 @@ void test_network(){
 
 	// TODO: when providing misshaped layers, an error should happend when evaluating / training ??
 
-	SoftReluLayer l1(4,4);
-	SoftReluLayer l2(4,1);
+	DenseLayer l1(3,4);
+	DenseLayer l2(4,1);
 
 	// when initializing, put weights that are similar in scale to the average data.
-	l1.randomInit(0,5);
-	l2.randomInit(0,5);
+	l1.randomInit(5);
+	l2.randomInit(5);
 
 	nn.layers.push_back(&l1);
 	nn.layers.push_back(&l2);
 
 
-	Vector input(4);
+	Vector input(3);
 	input.at(0) = 3;
 	input.at(1) = 1;
 	input.at(2) = 2;
-	input.at(3) = 1;
 
 	Vector output = nn.apply(input);
 	debug("Input and output for a 2 layer random network:");
@@ -70,13 +69,12 @@ void test_network(){
 	std::vector<Vector> trainingOutputs;
 
 	for(u32 i = 0;i < 1000;i++){
-		Vector newIn(4);
+		Vector newIn(3);
 		Vector newOut(1);
 
 		newIn.at(0) = randomFloat()*20 - 10;
 		newIn.at(1) = randomFloat()*20 - 10;
 		newIn.at(2) = randomFloat()*20 - 10;
-		newIn.at(3) = 1; // constant term to help the network.
 
 		newOut.at(0) = newIn.get(0) * 3 + newIn.get(1) * 5 + newIn.get(2) * 0;
 
@@ -99,7 +97,7 @@ void test_network(){
 		for(u32 i = 0;i < 3000;i++){
 			nn.train(trainingInputs,trainingOutputs);
 			float e = nn.RMSerror(trainingInputs,trainingOutputs);
-			if(e < 0.7) break;
+			if(e < 0.5) break;
 			if(e > previousError){
 				rate *= 0.99;
 			}

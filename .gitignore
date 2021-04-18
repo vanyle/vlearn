@@ -1,2 +1,6 @@
 executable/
 build/
+.project
+.cproject
+doc/*.html
+.settings
