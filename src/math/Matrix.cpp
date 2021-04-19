@@ -82,10 +82,10 @@ namespace vio{
 			this->matData[i] = v;
 		}
 	}
-	void Matrix::fillRandom(float coef){
+	void Matrix::fillRandom(float dev,float mean){
 		u32 s = w*h;
 		for(u32 i = 0;i < s;i++){
-			this->matData[i] = randomFloat() * coef;
+			this->matData[i] = (randomFloat()-.5) * 2 * dev + mean;
 		}
 	}
 	void Matrix::print(){

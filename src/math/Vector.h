@@ -21,7 +21,7 @@ namespace vio{
 		Vector& operator=(Vector&& v);
 
 		void fill(float v);
-		void fillRandom();
+		void fillRandom(float dev = 1,float mean = 0);
 
 		float normSquared() const;
 		float norm() const;

@@ -29,7 +29,7 @@ namespace vio{
 		float& at(u32 y,u32 x);
 
 		void fill(float v);
-		void fillRandom(float coef = 1);
+		void fillRandom(float coef = 1,float mean = 0);
 		void transpose(); // assumes that w == h
 		Matrix transpose() const; // assumes nothing, requires a copy.
 

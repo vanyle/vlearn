@@ -3,7 +3,8 @@
 #include "math/Matrix.h"
 #include "math/NeuralNetwork.h"
 #include "math/math.h"
-
+#include "file/FileReader.h"
+#include "file/ImageReader.h"
 
 using namespace vio;
 
@@ -59,15 +60,11 @@ void test_network(){
 	input.at(1) = 1;
 	input.at(2) = 2;
 
-	Vector output = nn.apply(input);
-	debug("Input and output for a 2 layer random network:");
-	input.print();
-	output.print();
+	Vector output = nn.apply(input); // just make sure this does not crash.
 
 	// let's generate some data to train the network !
 	std::vector<Vector> trainingInputs;
 	std::vector<Vector> trainingOutputs;
-
 	for(u32 i = 0;i < 1000;i++){
 		Vector newIn(3);
 		Vector newOut(1);
@@ -82,19 +79,16 @@ void test_network(){
 		trainingOutputs.push_back(std::move(newOut));
 	}
 
-	debug("Initial error: %.3f",nn.RMSerror(trainingInputs,trainingOutputs));
-
-	// ToFix: division by zero occur during the gradient descent, they should not.
 
 	auto begin_timer_clock = std::chrono::high_resolution_clock::now();
 
 	nn.prepare();
 
-	time_function("training",[&nn,&trainingInputs,&trainingOutputs](){
+	time_function("training the test network",[&nn,&trainingInputs,&trainingOutputs](){
 		float rate = 0.001;
 		float previousError = 99999;
 
-		for(u32 i = 0;i < 3000;i++){
+		for(u32 i = 0;i < 2000;i++){
 			nn.train(trainingInputs,trainingOutputs);
 			float e = nn.RMSerror(trainingInputs,trainingOutputs);
 			if(e < 0.5) break;
@@ -102,46 +96,50 @@ void test_network(){
 				rate *= 0.99;
 			}
 			previousError = e;
-			if(i%20 == 0){
-				debug("Error %i = %f, r = %f",i,e,rate);
-			}
+			//if(i%20 == 0){
+			//debug("Error %i = %f, r = %f",i,e,rate);
+			//}
 		}
 	});
 
-	// compare for a few elements of the training set how well they are memorized.
-
-	// TODO: why is the error not 0 ???
 	float e = nn.RMSerror(trainingInputs,trainingOutputs);
-	debug("Final Error (also called loss by some): %.4f",e);
-
-	nn.apply(trainingInputs[0]).print();
-	trainingOutputs[0].print();
-	debug("---");
-	nn.apply(trainingInputs[1]).print();
-	trainingOutputs[1].print();
-	debug("---");
-	nn.apply(trainingInputs[2]).print();
-	trainingOutputs[2].print();
-	debug("---")
-
-	debug("Content of the layers:")
-	nn.layers[0]->print();
-	nn.layers[1]->print();
+	vassert(e < 0.5); // error minimized in less than 2000 training steps.
 
 	// Alright, now, let's test our network !
-	// Let's compute 3*3 + 5*1 - 2*2 ( = 9 + 5 - 4 = 10)
-	output = nn.apply(input);
+
+	Vector vresult = nn.apply(trainingInputs[0]);
+	vresult -= trainingOutputs[0];
+
+	vassert(vresult.norm() < 5); // on a training example
+	output = nn.apply(input); // Let's compute 3*3 + 5*1 - 2*2 ( = 9 + 5 - 4 = 10)
 	output.print();
+	vassert(abs(output.get(0) - (3*input.get(0) + 5*input.get(1) - 2*input.get(2))) < 5); // on a non-training example.
 
 	debug("PASSED.");
 }
 
+void test_file(){
+	std::string p = getExecutablePath();
+
+	debug("p = %s",p.c_str());
+
+	ImageReader ir(getExecutableFolderPath() + "/example2.png");
+
+	debug("Size: w,h,alpha %i %i %i",ir.getWidth(),ir.getHeight(),ir.isAlpha());
+	debug("Pixel: %i %i %i",ir.pixelAtPos(0,999,0),ir.pixelAtPos(0,999,1),ir.pixelAtPos(0,999,2));
+
+
+	debug("Printed.");
+}
+
 
 int main(int argc,char ** argv){
+	utf8_console();
 	setup_crash_handler();
 	debug("Starting tests ...");
 	test_matrix();
-	test_network();
+	//test_network();
+	test_file();
 
 	debug("All tests passed.");
 

@@ -9,7 +9,7 @@ clean:
 	vapm task clean
 
 vtoolbox:
-	vapm task debug release_test genpdb
+	vapm task debug release_test gen_pdb
 
 
 

@@ -60,9 +60,9 @@ namespace vio{
 			data[i] = v;
 		}
 	}
-	void Vector::fillRandom(){
+	void Vector::fillRandom(float dev,float mean){
 		for(u32 i = 0;i < s;i++){
-			data[i] = randomFloat();
+			data[i] = (randomFloat()-.5) * 2 * dev + mean;
 		}
 	}
 

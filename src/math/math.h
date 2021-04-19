@@ -3,6 +3,7 @@
 #include "utils/utils.h"
 #include <cmath>
 /**
+@notitle
 	math.h provide math, number related function not found in <cmath>
 
 	This includes:
@@ -30,7 +31,26 @@ namespace vio{
 	void seed(u32 value1,u32 value2); // use this if you want more entropy.
 
 	float randomFloat();
+	/**
+	Returns a random float between 0 and 1
+	This method is an alias of randomFloat()
+	The randomness is not cryptographically secure.
+
+	The sequence returned by this method will always be the same (for a given seed) making it useful if you need to reproduce
+	a bug you encoutered in code involving randomness.
+	You can seed this function using the seed(u32 value) function or just seed().
+	@code
+	seed(312);
+	float r = 0;
+	for(u32 i = 0;i < 100;i++){
+		r += random();
+	}
+	vassert(abs(r - 50.783) < 0.01);
+	debug("r = %f",r); // r will always be the same.
+	@endcode
+	 */
 	float random(); // alias
+	float randomFloat();
 	double randomDouble();
 	u32 randomU32(const u32 max); // max included
 	i32 randomI32(const i32 min,const i32 max); // max and min included

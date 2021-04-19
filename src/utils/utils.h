@@ -2,6 +2,7 @@
 // everybody imports this. More or less.
 
 #include <cstdint>
+#include <chrono>
 
 typedef uint32_t u32;
 typedef int32_t i32;
@@ -41,11 +42,15 @@ typedef int32_t i32;
 
 #endif
 
+namespace vio{
 
-#include <chrono>
-template <typename F, typename ... Ts>
-void time_function(const char * name,F&& f, Ts&&...args){
-    std::clock_t start = std::clock();
-    std::forward<F>(f)(std::forward<Ts>(args)...);
-    debug("Time taken by %s: %.3f ms",name,static_cast<double>(std::clock() - start));
+	template <typename F, typename ... Ts>
+	void time_function(const char * name,F&& f, Ts&&...args){
+		std::clock_t start = std::clock();
+		std::forward<F>(f)(std::forward<Ts>(args)...);
+		debug("Time taken by %s: %.3f ms",name,static_cast<double>(std::clock() - start));
+	}
+
+	void utf8_console();
+
 }

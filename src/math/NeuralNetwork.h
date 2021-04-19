@@ -61,9 +61,19 @@ namespace vio{
 	};
 
 	/**
-	 This is similar to a Dense Keras layer with a leaky relu.
-	 Note: make this more general with multiple activation functions using functions pointers.
-	 Needs support: sigmoid, tanh, relu, leakyrelu
+	 This is similar to a Dense Keras layer.
+	 It supports multiple activation functions but uses leaky relu by default.
+	 Example:
+	 @code
+	NeuralNetwork nn;
+	DenseLayer l1(3,5,"leakyrelu"); // inputsize, outputsize, activation function
+	DenseLayer l2(5,2,"leakyrelu"); // inputsize, outputsize, activation function
+	nn.layers.push_back(l1);
+	nn.layers.push_back(l2);
+	nn.prepare();
+	// You are ready to train / use the network now !
+	// It takes 3 numbers as input and outputs 2 numbers (a vector of size 2)
+	 @endcode
 	*/
 	class DenseLayer : public Layer{
 	private:
@@ -96,12 +106,13 @@ namespace vio{
 		 This is similar to a Conv2D Keras layer
 
 		 a conv layer takes a X input and applies only one small x matrix to it.
-		 sqrt(X) and sqrt(x) must be integers.
-		 X is reshaped internally to be thought of as a square
-		 sqrt(x) must divide sqrt(X) evenly.
-		 outputSize = inputSize / reductionFactor / reductionFactor
-		 I recommend inputSize to be a power of 2 or at least by divisible by 16 (=4*4)
-		 Remember that outputSize needs to be an integer.
+
+		outputSize = floor(inputSize / reductionFactor / reductionFactor)
+		I recommend to choose inputSize and reductionFactor so that inputSize / reductionFactor / reductionFactor is an integer.
+
+		The input is assumed to be a SQUARE image. Its square root has to be an integer.
+		The ouput is also assumed to be a square.
+
 	 */
 	class ConvLayer : public Layer{
 	private:
@@ -144,6 +155,9 @@ namespace vio{
 		void ready(); // free the memory taken by prepare.
 
 		Vector apply(const Vector& in);
+
+		std::string serialize(); // TODO, used to save/load a trained network.
+		void load(std::string s);
 	};
 
 }

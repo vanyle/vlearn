@@ -126,7 +126,7 @@ namespace vio{
 		this->m -= um;
 	}
 	void DenseLayer::randomInit(float dev,float mean){
-		this->m.fillRandom(dev); // r = (x-.5) * 2 * dev + mean
+		this->m.fillRandom(dev,mean); // r = (x-.5) * 2 * dev + mean
 	}
 
 	// Convolution layer implementation
@@ -139,7 +139,7 @@ namespace vio{
 		this->reduc = reductionFactor;
 		this->learnable = true;
 		this->bias = false;
-		vassert(std::sqrt(inputSize))
+		vassert(side_length*side_length == inputSize); // check input is a square
 	}
 	ConvLayer::~ConvLayer(){
 

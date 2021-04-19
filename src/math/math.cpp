@@ -104,7 +104,6 @@ namespace vio{
 	static constexpr u32 MAGIC = 0x9908b0df;
 
 	struct MTState {
-		// have MT not be empty at the start, so that seeding is not needed by defaut
 		u32 MT[SIZE];
 		u32 MT_TEMPERED[SIZE];
 		size_t index = SIZE;
@@ -155,9 +154,13 @@ namespace vio{
 	void seed(u32 value){
 		seeded = true;
 		state.MT[0] = value;
+		// but all the other values of MT to 0 to reset the entropy.
+		for(u32 i = 1;i < sizeof(state.MT);i++){
+			state.MT[1] = 0;
+		}
 		state.index = SIZE;
 
-		for ( uint_fast32_t i = 1; i < SIZE; ++i)
+		for ( uint_fast32_t i = 1; i < SIZE; ++i) // shuffle
 			state.MT[i] = 0x6c078965*(state.MT[i-1] ^ state.MT[i-1]>>30) + i;
 	}
 	// provide more entropy for the generator
@@ -165,7 +168,10 @@ namespace vio{
 		seeded = true;
 		state.MT[0] = value1;
 		state.MT[1] = value2;
-		for (uint_fast32_t i = 2; i < SIZE; ++i)
+		for(u32 i = 2;i < sizeof(state.MT);i++){
+			state.MT[1] = 0;
+		}
+		for (uint_fast32_t i = 2; i < SIZE; ++i) // shuffle
 			state.MT[i] = 0x6c078965*(state.MT[i-1] ^ state.MT[i-1]>>30) + i;
 		state.index = SIZE;
 	}
