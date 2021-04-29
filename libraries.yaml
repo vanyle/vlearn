@@ -1,4 +1,6 @@
 -Llib,
+-lssl,
+-lcrypto,
 -lstdc++fs,
 -lkernel32,
 -luser32,

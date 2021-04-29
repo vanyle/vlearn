@@ -4,7 +4,6 @@
 #include <cstdio>
 
 namespace vio{
-
 	Matrix::Matrix(u32 w,u32 h){
 		this->w = w;
 		this->h = h;
@@ -24,7 +23,7 @@ namespace vio{
 		}
 	}
 	Matrix::~Matrix(){
-		delete this->matData;
+		delete [] this->matData;
 	}
 	Matrix& Matrix::operator=(const Matrix& m){
 		this->~Matrix();
@@ -32,6 +31,7 @@ namespace vio{
 		return *this;
 	}
 	Matrix& Matrix::operator=(Matrix&& m){
+		this->~Matrix();
 		this->matData = m.matData;
 		this->w = m.w;
 		this->h = m.h;
@@ -57,6 +57,14 @@ namespace vio{
 			}
 		}
 	}
+
+	float Matrix::normSquared() const{
+		float n = 0;
+		u32 s = h*w;
+		for(u32 i = 0;i < s;i++) n += matData[i]*matData[i];
+		return n;
+	}
+
 	Matrix Matrix::transpose() const{
 		Matrix transposed(h,w);
 		u32 i = 0;

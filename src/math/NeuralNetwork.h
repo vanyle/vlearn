@@ -5,6 +5,7 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include <vector>
+#include <string>
 
 namespace vio{
 
@@ -37,27 +38,87 @@ namespace vio{
 
 		u32 inputSize();
 		u32 outputSize();
-		void randomInit(float mean = 0,float dev = 1); // uniform random initiation with mean= avg, and std deviation = dev
+
+		//virtual void randomInit(float mean = 0,float dev = 1); // uniform random initiation with mean= avg, and std deviation = dev
 		virtual void print(); // for debug
 
 		virtual Vector apply(const Vector& in) = 0;
 
-		// same as apply but without the activator function and in the other direction.
+		// same as apply but in the other direction.
 		// used for backprop, usually implemented with m.applyTranspose
-		virtual Vector linApplyTranspose(const Vector& in) = 0;
-
-		virtual float activatorDerivative(float f) = 0;
+		// This is the gradient of the network at a given position.
+		virtual Vector applyGradient(const Vector& in,const Vector& evaluationPosition,const Vector& previousEvaluationPosition) = 0;
 
 		// usually does this->m -= m.
 		// not always thou (for example, in conv layers, this is not the case.)
-		virtual void updateMatrix(const Matrix& m) = 0;
-		virtual void updateBias(const Vector& v) = 0;
+		virtual void updateMatrix(const Matrix& m);
+		virtual void updateBias(const Vector& v);
 	};
+
+	class Optimizer{
+	public:
+		Optimizer();
+		virtual ~Optimizer();
+
+		virtual void prepare(std::vector<Layer*>& layers);
+		virtual void adjustGradientMatrix(Matrix& gradm);
+	};
+	class ConstantOptimizer : Optimizer{
+		float learningRate = 0.001;
+	public:
+		ConstantOptimizer();
+		~ConstantOptimizer();
+
+		void prepare(std::vector<Layer*>& layers);
+		void adjustGradientMatrix(Matrix& gradm);
+	};
+	class AdamOptimizer : Optimizer{
+		float learningRate = 0.001;
+		// adam parameters taken from: https://arxiv.org/pdf/1412.6980.pdf
+		float beta1 = 0.9;
+		float beta2 = 0.999;
+		// Same size as the number of learnable layers (obtained with prepare)
+		std::vector<Matrix> firstOrderMoment; // m_t = beta1 * m_t-1 + (1 - beta1) * gradientMatrix
+		std::vector<Matrix> secondOrderMoment; // v_t = beta2 * v_t-1 + (1 - beta2) * gradientMatrix^2 (element wise multiplication)
+		// return learningRate * m_t / (1-beta1^t) / (sqrt(v_t / (1-beta2^t)) + 0.000001)
+	public:
+		AdamOptimizer(float beta1 = 0.9,float beta2 = 0.999);
+		~AdamOptimizer();
+
+		void prepare(std::vector<Layer*>& layers);
+		void adjustGradientMatrix(Matrix& gradm);
+	};
+
 
 	// non learnable layer, normalizes its input for the next layer.
 	// res = (res - E(res)) / sqrt(var(res))
-	class BatchNorm : public Layer{
+	class BatchNormLayer : public Layer{
+public:
+		BatchNormLayer(u32 inputSize); // in = out
+		~BatchNormLayer();
 
+		Vector apply(const Vector& in);
+		Vector applyGradient(const Vector& in,const Vector& evaluationPosition,const Vector& previousEvaluationPosition); // let s = softmax(intermediate), and A :=  -s_i * s_j, then return A*s;
+		void print();
+
+		void updateMatrix(const Matrix& m); // does nothing
+		void updateBias(const Vector& v); // does nothing
+	};
+
+	// non learnable layer, used as a last layer to turn the input into a probability distribution.
+	// res <- in.softmax(); (exp / sum of exp)
+	// gradient: matrix where a_ij = in_i * res_j
+	class SoftMaxLayer : public Layer{
+public:
+		SoftMaxLayer(u32 inputSize); // in = out
+		~SoftMaxLayer();
+
+		Vector apply(const Vector& in);
+		Vector applyGradient(const Vector& in,const Vector& evaluationPosition,const Vector& previousEvaluationPosition); // let s = softmax(intermediate), and A :=  -s_i * s_j, then return A*s;
+		void print();
+
+		void updateMatrix(const Matrix& m); // does nothing
+		void updateBias(const Vector& v); // does nothing
 	};
 
 	/**
@@ -91,11 +152,11 @@ namespace vio{
 		// function every layer has to implement
 		Vector apply(const Vector& in);
 
-		// in case the layer is non learnable, those 4 matter much less,
-		// they are used for back-prop.
-		Vector linApplyTranspose(const Vector& in);
-		float activatorDerivative(float f);
+		// used for gradient backpropagation
+		Vector applyGradient(const Vector& in,const Vector& evaluationPosition,const Vector& previousEvaluationPosition);
 
+		// in case the layer is non learnable, those 2 functions are never called, they
+		// are used to update the weights
 		void updateMatrix(const Matrix& m);
 		void updateBias(const Vector& vec);
 
@@ -125,16 +186,21 @@ namespace vio{
 
 		void print();
 
+		void setKernel(Matrix k); // mostly needed for debug.
+		Matrix& getKernel(); // mostly needed for the cool dreamy animations
+
+		void randomInit(float dev,float mean = 0.f);
+
 		Vector apply(const Vector& in);
-		Vector linApplyTranspose(const Vector& in);
-		float activatorDerivative(float f);
+		Vector applyGradient(const Vector& in,const Vector& evaluationPosition,const Vector& previousEvaluationPosition);
+
 		void updateMatrix(const Matrix& m);
-		// no biases for this layer type.
+		void updateBias(const Vector& v); // does nothing
 	};
 
 	/**
 	Represents a NeuralNetwork.
-
+	See DenseLayer for an example of how to use it.
 	 */
 	class NeuralNetwork{
 	private:
@@ -146,10 +212,27 @@ namespace vio{
 		void *memory = 0;
 		bool isReady = false;
 	public:
+		NeuralNetwork();
+		~NeuralNetwork();
+
+		u32 computationCoreCount = 4; // number of operation the machine is able to do at the same time.
+
+		// an implementation of the computation, depending on the computing device used.
+		Matrix (*computationFunction)(NeuralNetwork& ref,u32 tstart,u32 tend,std::vector<Vector>& in,std::vector<Vector>& out,const std::vector<u32> permutationTable);
+
 		std::vector<Layer*> layers;
 
-		void train(std::vector<Vector> in,std::vector<Vector> out,float rate = 0.01);
-		float RMSerror(std::vector<Vector> in,std::vector<Vector> out);
+		void train(std::vector<Vector>& in,std::vector<Vector>& out,float rate = 0.01);
+
+		// function applied to the last layer for gradient descent training.
+		// example (L2): norm(input - output)
+		// gradient of example: (input - output) / norm(input - output)
+		// If you cannot compute the gradient / error for the pair given (if the function used is not continuous at that point or something),
+		// return 0 and it will be ignored.
+		float (*errorFunction)(const Vector& input,const Vector& expected) = 0;
+		Vector (*errorFunctionGradient)(const Vector& input,const Vector& expected) = 0;
+
+		float loss(std::vector<Vector>& in,std::vector<Vector>& out);
 
 		void prepare(); // all this when ready, this will allocate the memory required by the network for fast trainign.
 		void ready(); // free the memory taken by prepare.

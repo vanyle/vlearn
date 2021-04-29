@@ -1,5 +1,5 @@
-name: vtoolbox
-author: me
+name: vlearn
+author: vanyle - Antoine Delègue
 version: 0.1
 tasks:
   release: 
@@ -15,8 +15,14 @@ tasks:
       - -fdiagnostics-color
       - -Wall
       - -D NDEBUG # disable assertions
-      - -Os
+      - -Ofast
+      - -flto # link time optimization, can mess with the debugger a lot
+      - -pipe
       - -Isrc
+      - -msse
+      - -msse2
+      - -msse3
+      - -mmmx
       - -Iinclude
   
   doc:
@@ -27,20 +33,32 @@ tasks:
   gen_pdb:
     type: command
     commands:
-      - cv2pdb executable/test.exe
+      - cv2pdb executable/test_debug.exe
 
   release_test:
     type: build
     timer: true
     source_path: src/test
     output_path: build
-    output_file: executable/test.exe
-    linker_arguments: ["-L./executable","-lproject", @include "libraries.yaml", "-static"]
+    output_file: executable/test_release.exe
+    linker_arguments: ["-L./executable","-lproject", @include "libraries.yaml", "-static", "-flto"]
     arguments:
       - -fdiagnostics-color
       - -Os
+      - -pipe
       - -Isrc
+      - -flto
+
+  debug_test:
+    copy: release_test
+    output_file: executable/test_debug.exe
+    linker_arguments: ["-L./executable","-lproject", @include "libraries.yaml", "-static"]
+    arguments:
+      - -fdiagnostics-color
+      - -Og
       - -g
+      - -pipe
+      - -Isrc
 
   debug:
     copy: release
@@ -48,7 +66,12 @@ tasks:
     arguments:
       - -fdiagnostics-color
       - -Wall
-      - -O0
+      - -Og
+      - -msse
+      - -msse2
+      - -msse3
+      - -mmmx
+      - -pipe
       - -g # add debugging data
       - -Isrc
       - -Iinclude
@@ -56,12 +79,12 @@ tasks:
   run_debug:
     type: command
     commands:
-      - cd executable & test.exe
+      - cd executable & test_debug.exe
 
   run:
     type: command
     commands:
-      - cd executable & test.exe
+      - cd executable & test_release.exe
 
   clean:
     type: command

@@ -2,10 +2,11 @@
 // everybody imports this. More or less.
 
 #include <cstdint>
+#include <cstdio>
 #include <chrono>
 
-typedef uint32_t u32;
-typedef int32_t i32;
+typedef unsigned int u32;
+typedef int i32;
 
 // 32 bit friendly code if possible. 
 //typedef u64 uint64_t;
@@ -41,6 +42,8 @@ typedef int32_t i32;
 #define vpanic(str,args...){}
 
 #endif
+
+#include <utility> // std::forward
 
 namespace vio{
 

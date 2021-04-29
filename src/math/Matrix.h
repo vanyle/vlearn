@@ -4,6 +4,7 @@
 #include "utils/utils.h"
 #include "Vector.h"
 
+
 namespace vio{
 
 	struct Vector;
@@ -32,6 +33,8 @@ namespace vio{
 		void fillRandom(float coef = 1,float mean = 0);
 		void transpose(); // assumes that w == h
 		Matrix transpose() const; // assumes nothing, requires a copy.
+
+		float normSquared() const;
 
 		void print(); // debug.
 

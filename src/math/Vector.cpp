@@ -4,6 +4,7 @@
 #include <cstdio>
 
 namespace vio{
+
 	Vector::Vector(u32 size){
 		this->s = size;
 		this->data = new float[size];
@@ -16,7 +17,7 @@ namespace vio{
 		}
 	}
 	Vector::~Vector(){
-		delete this->data;
+		delete [] this->data;
 	}
 
 	Vector& Vector::operator=(const Vector& v){
@@ -25,6 +26,7 @@ namespace vio{
 		return *this;
 	}
 	Vector& Vector::operator=(Vector&& v){
+		this->~Vector();
 		this->s = v.s;
 		this->data = v.data;
         // now remove the content of other so that it cannot be used anymore
@@ -106,6 +108,22 @@ namespace vio{
 			printf("%.3f ",data[i]);
 		}
 		printf("]\n");
+	}
+	Vector Vector::softmax() const{
+		Vector v(s);
+		float s = 0;
+		// substract max of data to prevent precision issues.
+		float datamax = data[0];
+		for(u32 i = 1;i < s;i++){
+			if(data[i] > datamax) datamax = data[i];
+		}
+		for(u32 i = 0;i < s;i++){
+			s += exp(data[i] - datamax);
+		}
+		for(u32 i = 0;i < s;i++){
+			v.data[i] = exp(data[i] - datamax) / s;
+		}
+		return v;
 	}
 	Vector Vector::add(const Vector& a,const Vector& b){
 		vassert(a.s == b.s);

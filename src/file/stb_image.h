@@ -340,6 +340,13 @@ RECENT REVISION HISTORY:
 #include <stdio.h>
 #endif // STBI_NO_STDIO
 
+#ifdef WIN32
+#include <windows.h>
+#include <codecvt>
+#include <string>
+#include <iomanip>
+#endif
+
 #define STBI_VERSION 1
 
 enum
@@ -1213,8 +1220,6 @@ static unsigned char *stbi__load_and_postprocess_8bit(stbi__context *s, int *x, 
       ri.bits_per_channel = 8;
    }
 
-   // @TODO: move stbi__convert_format to here
-
    if (stbi__vertically_flip_on_load) {
       int channels = req_comp ? req_comp : *comp;
       stbi__vertical_flip(result, *x, *y, channels * sizeof(stbi_uc));
@@ -1239,9 +1244,6 @@ static stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *s, int *x, 
       ri.bits_per_channel = 16;
    }
 
-   // @TODO: move stbi__convert_format16 to here
-   // @TODO: special case RGB-to-Y (and RGBA-to-YA) for 8-bit-to-16-bit case to keep more precision
-
    if (stbi__vertically_flip_on_load) {
       int channels = req_comp ? req_comp : *comp;
       stbi__vertical_flip(result, *x, *y, channels * sizeof(stbi__uint16));
@@ -1262,40 +1264,24 @@ static void stbi__float_postprocess(float *result, int *x, int *y, int *comp, in
 
 #ifndef STBI_NO_STDIO
 
-#if defined(_MSC_VER) && defined(STBI_WINDOWS_UTF8)
+#if defined(WIN32) && defined(STBI_WINDOWS_UTF8)
 STBI_EXTERN __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned int cp, unsigned long flags, const char *str, int cbmb, wchar_t *widestr, int cchwide);
 STBI_EXTERN __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, const wchar_t *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);
 #endif
 
-#if defined(_MSC_VER) && defined(STBI_WINDOWS_UTF8)
+#if defined(WIN32) && defined(STBI_WINDOWS_UTF8)
 STBIDEF int stbi_convert_wchar_to_utf8(char *buffer, size_t bufferlen, const wchar_t* input)
 {
 	return WideCharToMultiByte(65001 /* UTF8 */, 0, input, -1, buffer, (int) bufferlen, NULL, NULL);
 }
 #endif
 
-static FILE *stbi__fopen(char const *filename, char const *mode)
-{
+static FILE *stbi__fopen(char const *filename, char const *mode){
    FILE *f;
-#if defined(_MSC_VER) && defined(STBI_WINDOWS_UTF8)
-   wchar_t wMode[64];
-   wchar_t wFilename[1024];
-	if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, filename, -1, wFilename, sizeof(wFilename)))
-      return 0;
-
-	if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, mode, -1, wMode, sizeof(wMode)))
-      return 0;
-
-#if _MSC_VER >= 1400
-	if (0 != _wfopen_s(&f, wFilename, wMode))
-		f = 0;
-#else
-   f = _wfopen(wFilename, wMode);
-#endif
-
-#elif defined(_MSC_VER) && _MSC_VER >= 1400
-   if (0 != fopen_s(&f, filename, mode))
-      f=0;
+#if WIN32 && defined(STBI_WINDOWS_UTF8)
+   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convert;
+   std::wstring wFilename = convert.from_bytes(filename);
+   _wfopen_s(&f,wFilename.c_str(), L"rb");
 #else
    f = fopen(filename, mode);
 #endif
@@ -4120,7 +4106,7 @@ static int stbi__zhuffman_decode_slowpath(stbi__zbuf *a, stbi__zhuffman *z)
    if (s >= 16) return -1; // invalid code!
    // code size is s, so:
    b = (k >> (16-s)) - z->firstcode[s] + z->firstsymbol[s];
-   if (b >= sizeof (z->size)) return -1; // some data was corrupt somewhere!
+   if (b >= (int) sizeof (z->size)) return -1; // some data was corrupt somewhere!
    if (z->size[b] != s) return -1;  // was originally an assert, but report failure instead.
    a->code_buffer >>= s;
    a->num_bits -= s;
@@ -5714,8 +5700,8 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
    int RLE_repeating = 0;
    int read_next_pixel = 1;
    STBI_NOTUSED(ri);
-   STBI_NOTUSED(tga_x_origin); // @TODO
-   STBI_NOTUSED(tga_y_origin); // @TODO
+   STBI_NOTUSED(tga_x_origin);
+   STBI_NOTUSED(tga_y_origin);
 
    if (tga_height > STBI_MAX_DIMENSIONS) return stbi__errpuc("too large","Very large image (corrupt?)");
    if (tga_width > STBI_MAX_DIMENSIONS) return stbi__errpuc("too large","Very large image (corrupt?)");
@@ -6775,8 +6761,8 @@ static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y,
       stbi_uc *two_back = 0;
       stbi__gif g;
       int stride;
-      int out_size = 0;
-      int delays_size = 0;
+      //constexpr int out_size = 0;
+      //constexpr int delays_size = 0;
       memset(&g, 0, sizeof(g));
       if (delays) {
          *delays = 0;
@@ -6793,7 +6779,7 @@ static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y,
             stride = g.w * g.h * 4;
 
             if (out) {
-               void *tmp = (stbi_uc*) STBI_REALLOC_SIZED( out, out_size, layers * stride );
+               void *tmp = (stbi_uc*) STBI_REALLOC_SIZED( out, 0, layers * stride ); // 0 out_size
                if (NULL == tmp) {
                   STBI_FREE(g.out);
                   STBI_FREE(g.history);
@@ -6802,19 +6788,19 @@ static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y,
                }
                else {
                    out = (stbi_uc*) tmp;
-                   out_size = layers * stride;
+                   //out_size = layers * stride;
                }
 
                if (delays) {
-                  *delays = (int*) STBI_REALLOC_SIZED( *delays, delays_size, sizeof(int) * layers );
-                  delays_size = layers * sizeof(int);
+                  *delays = (int*) STBI_REALLOC_SIZED( *delays, 0, sizeof(int) * layers ); // 0 delays_size
+                  //delays_size = layers * sizeof(int);
                }
             } else {
                out = (stbi_uc*)stbi__malloc( layers * stride );
-               out_size = layers * stride;
+               //out_size = layers * stride;
                if (delays) {
                   *delays = (int*) stbi__malloc( layers * sizeof(int) );
-                  delays_size = layers * sizeof(int);
+                  //delays_size = layers * sizeof(int);
                }
             }
             memcpy( out + ((layers - 1) * stride), u, stride );

@@ -33,6 +33,9 @@ public:
 	bool isAlpha();
 	bool isLoaded();
 	std::string loadFailCause();
+	void save(std::string filename);
+
+	void setPixelAtPos(u32 x,u32 y,u32 color_channel,char pvalue);
 
 	unsigned char pixelAtPos(u32 x,u32 y,u32 color_channel);
 

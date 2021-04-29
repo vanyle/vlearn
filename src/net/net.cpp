@@ -6,7 +6,23 @@
 #include <string>
 #include <iostream>
 
-using namespace std;
+#include "utils/utils.h"
+
+/**
+@notitle
+
+Net is the networking part of vtoolbox.
+To compile this folder, you might need to link against ssl and crypto (-lssl, -lcrypto),
+as those are required for some protocols like HTTPS for example.
+
+Example of stuff that you can do with net:
+
+@code
+std::string ip = "192.168.0.2";
+bool reachable = ping(ip);
+debug("Is IP %s reachable : %b",ip.c_str(),reachable);
+@endcode
+ */
 
 
 // #pragma comment(lib, "iphlpapi.lib")
@@ -32,7 +48,7 @@ bool ping(std::string ip,std::string data){
 
 	ipaddr = inet_addr(ip.c_str());
 	if (ipaddr == INADDR_NONE) {
-		cout << "bad ip." << endl;
+		debug("bad ip");
 		return false;
 	}
 
@@ -55,9 +71,9 @@ bool ping(std::string ip,std::string data){
 }
 
 int main(){
-	cout << ping("192.168.5.8","") << endl;
-	cout << ping("10.50.5.3","") << endl;
-	cout << ping("172.17.193.81","") << endl;
+//	cout << ping("192.168.5.8","") << endl;
+//	cout << ping("10.50.5.3","") << endl;
+//	cout << ping("172.17.193.81","") << endl;
 
 	return 0;
 }

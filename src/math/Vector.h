@@ -39,6 +39,8 @@ namespace vio{
 		Vector& operator*=(float v);
 		Vector& operator/=(float v);
 
+		Vector softmax() const;
+
 		static Vector add (const Vector& a,const Vector& b);
 		static Vector sub(const Vector& a,const Vector& b);
 		static float dot (const Vector& a,const Vector& b); // aᵀb

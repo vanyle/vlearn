@@ -35,7 +35,6 @@
 #include <stdio.h>
 #include <cstdlib>
 
-
 // on crash mode, don't print calls made after the crash occured
 // on cut setup, don't print calls made before main is called.
 void stack_trace(bool crashMode, bool cutSetup);
