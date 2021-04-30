@@ -10,6 +10,8 @@
 
 namespace vio{
 
+	float crossEntropyErrorFn(const Vector& in,const Vector& expected);
+	Vector crossEntropyErrorDerivative(const Vector& in,const Vector& expected);
 
 	/**
 	Represents a NeuralNetwork.

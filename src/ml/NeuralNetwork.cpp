@@ -25,7 +25,12 @@ namespace vio{
 		// apply softmax to in.
 		float r = 0;
 		for(u32 i = 0;i < in.size();i++){
-			r -= expected.get(i) * log2(in.get(i));
+			if(in.get(i) > 0){
+				r -= expected.get(i) * log2(in.get(i));
+			}else{
+				vpanic("Unable to evaluate the cross-entropy if the input is not a probability distribution."
+						" Did you forget a softmax layer at the end of your network ?");
+			}
 		}
 		return r;
 	}
@@ -87,8 +92,6 @@ namespace vio{
 		}
 		vassert(in.size() == out.size());
 
-		// TODO Split this into multiple files.
-
 		// TODO The amount of memory allocated by train for all the vectors and stuff is crazy.
 		// We need to use a custom allocator that would call free and new only once during the whole training session.
 		// Indeed the amount of memory needed to run this function is deterministic and depends only on the dimensions of the network,
@@ -111,7 +114,7 @@ namespace vio{
 			permutation[swap_index] = temp;
 		}
 
-		u32 batchSize = in.size() / computationCoreCount;
+		// u32 batchSize = in.size() / computationCoreCount;
 
 		for(u32 train_index = 0;train_index < in.size();train_index++){
 			u32 real_index = permutation[train_index];
@@ -121,6 +124,7 @@ namespace vio{
 			for(u32 j = 0;j < layers.size();j++){
 				intermediate.push_back(layers[j]->apply(intermediate[intermediate.size() - 1]));
 			}
+
 
 			for(u32 i = 0;i < layers.size();i++){
 				if(!layers[i]->isLearnable()) continue;

@@ -28,17 +28,14 @@ namespace vio {
 	}
 	Vector SoftMaxLayer::applyGradient(const Vector& in,const Vector& evaluationPosition,const Vector& previousEvaluationPosition){
 		// dy_i/dz_j = -y_i * y_j.
-		Matrix m(in.size(),in.size());
+		/*Matrix m(in.size(),in.size());m.fill(0);
 		for(u32 i = 0;i < in.size();i++){
 			for(u32 j = 0;j < in.size();j++){
-				if(i!=j){
-					m.at(i,j) = -evaluationPosition.get(i) * evaluationPosition.get(j);
-				}else{
-					m.at(i,i) = (1-evaluationPosition.get(i))*evaluationPosition.get(i);
-				}
+				m.at(j,i) = ((i==j)-evaluationPosition.get(i)) * evaluationPosition.get(j);
 			}
-		} // compute jacobian of layer, than multiply it.
-		return m.applyTranspose(in);
+		}*/ // compute jacobian of layer, than multiply it.
+
+		return in; // handled by crossEntropy.
 	}
 	void SoftMaxLayer::updateMatrix(const Matrix& m){vassert(false);}
 	void SoftMaxLayer::updateBias(const Vector& v){vassert(false);}

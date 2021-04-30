@@ -119,13 +119,6 @@ void test_network(){
 	output.print();
 	vassert(abs(output.get(0) - (3*input.get(0) + 5*input.get(1) - 2*input.get(2))) < 5); // on a non-training example.
 
-	// Now what the training as tested, let's verify that the Conv layer works.
-	// Here are some training example from stack exchange.
-
-	// input: [[2, 9, 3, 8], [0, 1, 5, 5], [5, 7, 2, 6], [8, 8, 3, 6]]
-	// convolution: [[9,8], [8,6]]
-	// reduction factor: 2
-	// expected output:
 
 	debug("PASSED.");
 }
@@ -209,20 +202,36 @@ void test_mnist(){
 	nn.layers.push_back(&cl2);
 	nn.layers.push_back(&l3);
 	nn.layers.push_back(&l4);
-	//nn.layers.push_back(&l5);
+	//
 	nn.prepare();
 
 	debug("Loss: %.6f",nn.loss(images,labels));
 
-	for(u32 i = 0;i < 100;i++){
+	nn.train(images,labels,0.001); // train once, then add the softmax layer.
+	debug("Loss (presoft): %.6f",nn.loss(images,labels));
+
+	// You can train your network, edit it and retrain it afterwards !
+	nn.layers.push_back(&l5); // softmax and cross entropy MUST be used together. Training will fail if you just use cross entropy alone.
+	nn.errorFunction = crossEntropyErrorFn;
+	nn.errorFunctionGradient = crossEntropyErrorDerivative;
+	nn.prepare();
+
+	debug("Loss (postsoft): %.6f",nn.loss(images,labels)); // we loss a bit of loss as the goal changes a bit.
+
+	for(u32 i = 0;i < 3;i++){
 		nn.train(images,labels,0.001);
 		debug("Loss: %.6f",nn.loss(images,labels));
-		//nn.layers[0]->print();
-		usleep(1000 * 500);
 	}
 
-	debug("Loss: %.6f",nn.loss(images,labels));
-
+	// now, test:
+	for(u32 i = 0;i < 4;i++){
+		debug("-----")
+		Vector result = nn.apply(images[i]);
+		debug("Image[%i] is: ",i);
+		labels[i].print();
+		debug("The network predicts:");
+		result.print();
+	}
 
 	debug("PASSED.");
 

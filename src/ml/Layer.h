@@ -56,8 +56,9 @@ class Layer{
 		u32 inputSize();
 		u32 outputSize();
 
-		//virtual void randomInit(float mean = 0,float dev = 1); // uniform random initiation with mean= avg, and std deviation = dev
 		virtual void print(); // for debug
+
+		// virtual std::string serialize();
 
 		virtual Vector apply(const Vector& in) = 0;
 
