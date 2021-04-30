@@ -3,13 +3,16 @@ browser = brave
 # replace cd with pwd on linux?
 current_dir = $(shell cd)
 
-all: vtoolbox
+all: vlearn
 
 clean:
 	vapm task clean
 
-vtoolbox:
+vlearn:
 	vapm task debug debug_test gen_pdb
+vlearn_release:
+	# no need to gen here, release does not have debug symbols.
+	vapm task release release_test
 
 
 

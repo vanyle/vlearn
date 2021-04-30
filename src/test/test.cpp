@@ -1,8 +1,12 @@
+#include <ml/NeuralNetwork.h>
+#include <ml/DenseLayer.h>
+#include <ml/ConvLayer.h>
+#include <ml/SoftMaxLayer.h>
+
 #include "file/File.h"
 #include "utils/utils.h"
 #include "utils/vcrash.h"
 #include "math/Matrix.h"
-#include "math/NeuralNetwork.h"
 #include "math/math.h"
 #include "file/ImageReader.h"
 
@@ -224,7 +228,6 @@ void test_mnist(){
 
 }
 void test_http(){
-	// let's try to leak memory !
 	constexpr u32 rounds = 1'000'000;
 
 
