@@ -11,6 +11,7 @@
 #include "math/Matrix.h"
 #include "math/Vector.h"
 #include "utils/utils.h"
+#include <string>
 
 namespace vio {
 

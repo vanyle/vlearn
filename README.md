@@ -11,7 +11,9 @@ VLearn is the framework used for the Distributed Machine Learning project.
 
 # Performance
 
-We are faster than tensorflow. No more waiting for days to train your model.
+Our goal is to be faster than tensorflow. No more waiting for days to train your model.
+To do this, we provide feature to distribute the computation across devices and we support more GPUs.
+We plan to have a CUDA and an OpenCL backend.
 
 # Building and Usage.
 
@@ -21,15 +23,70 @@ When linking vlearn, you should also link with dbghelp on windows to access the 
 VLearn is compiled with the vapm build system and the MinGW compiler. VLearn aims to be compatible with Windows and Linux.
 I won't add compatibility with the Microsoft Visual C++ Compiler but I will accept merge requests adding this compatibility.
 
-# Presentation of the various modules
+# Usage
+
+Examples of how to use VLearn are available in the `test` folder.
+Here is how to train a network to learn a linear operation:
+
+```cpp
+#include <... put all the includes ...>
+
+using namespace vio;
+
+void main(){
+	// Define the network
+	NeuralNetwork nn;
+	DenseLayer l1(3,4); // input size: 3 floats
+	DenseLayer l2(4,1); // output size: 1 float
+	l1.randomInit(5);
+	l2.randomInit(5);
+	nn.layers.push_back(&l1);
+	nn.layers.push_back(&l2);
+
+	nn.prepare();  // compile the network.
+
+	// let's generate some data to train the network !
+	// We try to teach the network a simple linear function.
+	// You can change this to try to make it learn various stuff.
+	std::vector<Vector> trainingInputs;
+	std::vector<Vector> trainingOutputs;
+	for(u32 i = 0;i < 1000;i++){
+		Vector newIn(3);
+		Vector newOut(1);
+
+		newIn.at(0) = randomFloat()*20 - 10;
+		newIn.at(1) = randomFloat()*20 - 10;
+		newIn.at(2) = randomFloat()*20 - 10;
+
+		newOut.at(0) = newIn.get(0) * 3 + newIn.get(1) * 5 + newIn.get(2) * 0;
+
+		trainingInputs.push_back(std::move(newIn));
+		trainingOutputs.push_back(std::move(newOut));
+	}
+	
+	for(u32 i = 0;i < 1000;i++){
+		nn.train(trainingInputs,trainingOutputs,0.001); // 0.001 is optimal, it's the learning rate
+	}
+	float e = nn.loss(trainingInputs,trainingOutputs);
+	debug("Loss : %f",e);
+
+	// Test the network:
+	Vector my_input(3);
+	my_input.at(0) = 3;
+	my_input.at(1) = 5;
+	my_input.at(2) = -3;
+	Vector my_output = nn.apply(my_input); // evaluate the network on the input
+	my_output.print();
+}
+```
+
+# Organisation of the project and information for contributing
 
 ## Machine learning
 
 The machine learning related code is in the ml folder.
 We provide code to build and train a neural network, with methods similar to the keras ones.
-We provide various Layer types, Optimizers (I mean, we have adam, you won't need anything else) and backends.
-
-## Networking
+We provide various Layer types, Optimizers (I mean, we have adam, you won't need anything else) and computing backends.
 
 ## File manipulation
 
@@ -41,6 +98,7 @@ Check out the documentation (`doc/index.html`) for more info.
 ## Debugging
 
 VCrash is a part of VToolbox, checkout vcrash here: https://github.com/vanyle/vcrash
+VCrash allows us to print stack traces and causes of crash even when no debugger is attached to the program.
 
 ## Documentation
 
@@ -48,27 +106,13 @@ Checkout `/doc/` for detailed documentation of every package.
 `/doc/` contains an `index.html` with auto-generated searchable documentation for every package.
 For examples, see the `/test/` folder, it contains working code examples of most features of vtoolbox.
 
-# Distributed Machine Learning
+## TODO
 
-How does it work ?
-
-Well, let's consider a NeuralNetwork object.
-Some ideas to parallelism training:
-
-1. Every node computes the gradient with a subset of the training data and for a step,
-we take the average gradient.
-
-2. (Get a quick start): Have nodes starts the training alone with random
-weights and pick the best node (with the smallest loss) after a few iteration.
-
-3. In case of adverserial networks (GAN), the 2 opposing networks can run of separate machines.
-
-Those ideas work but don't provide a big performance gain. To have a bigger speedup, we need to change the
-overall architecture of the learning algorithm.
-We need to think about how humans learn. A human can learn several thing at once very quickly.
-
-Maybe what we could do is to train multiple smaller independent learning algorithms at once.
-The challenge is to make sure that all those networks have to be independent.
+- Implement more computing backends (GPUs)
+- Implement for optimizer
+- Implement non-gradient descent based learning systems (evolution, etc...)
+- Implement "layer branches"
+- Implement distributed training over the network
 
 # References
 

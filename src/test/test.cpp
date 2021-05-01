@@ -223,15 +223,11 @@ void test_mnist(){
 		debug("Loss: %.6f",nn.loss(images,labels));
 	}
 
-	// now, test:
-	for(u32 i = 0;i < 4;i++){
-		debug("-----")
-		Vector result = nn.apply(images[i]);
-		debug("Image[%i] is: ",i);
-		labels[i].print();
-		debug("The network predicts:");
-		result.print();
-	}
+
+	// kernels used:
+	debug("Kernels: ");
+	cl1.getKernel().print();
+	cl2.getKernel().print();
 
 	debug("PASSED.");
 

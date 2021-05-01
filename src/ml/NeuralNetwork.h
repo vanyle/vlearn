@@ -13,6 +13,12 @@ namespace vio{
 	float crossEntropyErrorFn(const Vector& in,const Vector& expected);
 	Vector crossEntropyErrorDerivative(const Vector& in,const Vector& expected);
 
+	// Used to update a learnable layer with bias.
+	struct UpdatePair{
+		Matrix m;
+		Vector v;
+	};
+
 	/**
 	Represents a NeuralNetwork.
 	See DenseLayer for an example of how to use it.

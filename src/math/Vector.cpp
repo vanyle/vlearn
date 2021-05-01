@@ -111,17 +111,17 @@ namespace vio{
 	}
 	Vector Vector::softmax() const{
 		Vector v(s);
-		float s = 0;
+		float sum = 0;
 		// substract max of data to prevent precision issues.
 		float datamax = data[0];
 		for(u32 i = 1;i < s;i++){
 			if(data[i] > datamax) datamax = data[i];
 		}
 		for(u32 i = 0;i < s;i++){
-			s += exp(data[i] - datamax);
+			sum += exp(data[i] - datamax + 5); // e^5 = 148
 		}
 		for(u32 i = 0;i < s;i++){
-			v.data[i] = exp(data[i] - datamax) / s;
+			v.data[i] = exp(data[i] - datamax + 5) / sum;
 		}
 		return v;
 	}

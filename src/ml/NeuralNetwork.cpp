@@ -79,11 +79,55 @@ namespace vio{
 
 	// a classic implementation of the computation function for a CPU backend.
 	// this function is (almost) pure and can be run on many thread by changing the start and end indices.
-	Matrix cpuComputationFunction(NeuralNetwork& ref,u32 tstart,u32 tend,std::vector<Vector>& in,std::vector<Vector>& out,const std::vector<u32> permutationTable){
-		Matrix m(1,1);
-		m.fill(0);
+	UpdatePair cpuComputationFunction(NeuralNetwork& ref,u32 layerIndex,u32 tstart,u32 tend,std::vector<Vector>& in,std::vector<Vector>& out,const std::vector<u32> permutationTable){
+		vassert(tend > tstart);
+		vassert(ref.layers[layerIndex]->isLearnable());
 
-		return m;
+		Matrix updateM(ref.layers[layerIndex]->inputSize(),ref.layers[layerIndex]->outputSize());
+		const int updateVSize = ref.layers[layerIndex]->isBias() ? ref.layers[layerIndex]->outputSize() : 0;
+		Vector updateV(updateVSize); // size is 0 if there is not bias to learn.
+
+		updateM.fill(0);
+		updateV.fill(0);
+
+		for(u32 train_index = tstart;train_index < tend;train_index++){
+			u32 real_index = permutationTable[train_index];
+			// Evaluate the intermediate results for every layer.
+			// intermediate.size == layer.size + 1
+			std::vector<Vector> intermediate{ in[real_index] };
+			for(u32 j = 0;j < ref.layers.size();j++){
+				intermediate.push_back(ref.layers[j]->apply(intermediate[intermediate.size() - 1]));
+			}
+
+			if(!ref.layers[layerIndex]->isLearnable()) continue;
+
+			// Gradient computation is here.
+			// J/dx * dx/dm = J/dm (the thing we wanna compute). We know that dx/dm = transpose(v)
+			// Let's compute v2 = J/dx (it's a vector)
+
+			Vector v2 = ref.errorFunctionGradient(intermediate[intermediate.size() - 1 ],out[real_index]);
+			if(v2.normSquared() == 0.00){
+				continue;
+			}
+
+			for(i32 j = ref.layers.size()-1;j > (i32)layerIndex;j--){ // j in [ 1;layer.size() ]
+				v2 = std::move(ref.layers[j]->applyGradient(v2,intermediate[j],intermediate[j-1]));
+			}
+
+
+			updateM += Vector::crossNorm(v2,intermediate[layerIndex]); // J/dx * dx/dm = J/dm
+			if(ref.layers[layerIndex]->isBias()){
+				updateV += v2;
+			}
+
+		}
+
+		updateM /= (tend - tstart);
+		updateV /= (tend - tstart);
+
+		UpdatePair upair{updateM,updateV};
+
+		return upair;
 	}
 
 	void NeuralNetwork::train(std::vector<Vector>& in,std::vector<Vector>& out,float learningRate){
